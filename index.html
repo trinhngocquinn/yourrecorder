@@ -132,10 +132,34 @@
 
       recorder.ondataavailable = e => chunks.push(e.data);
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        player.src = url;
-      };
+  const blob = new Blob(chunks, { type: 'audio/webm' });
+  const url = URL.createObjectURL(blob);
+  player.src = url;
+
+  // Đổi tên theo thời gian
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/[:.]/g, "-");
+  const filename = `recording-${timestamp}.webm`;
+
+  // Đọc blob & gửi base64
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const base64Data = reader.result.split(',')[1];
+
+    fetch('https://script.google.com/macros/s/AKfycbypdXnddhSqe4Ymem8uSv34cAN-VzELsohwpMwFYNfRIZovwWlYpJzquUJ02SQ1qlzH/exec?filename=' + encodeURIComponent(filename), {
+      method: 'POST',
+      body: base64Data,
+      headers: {
+        'Content-Type': 'application/octet-stream'
+      }
+    })
+    .then(res => res.text())
+    .then(msg => alert(msg))
+    .catch(err => alert("❌ Upload failed: " + err));
+  };
+  reader.readAsDataURL(blob);
+};
+
 
       recorder.start();
       startBtn.disabled = true;
