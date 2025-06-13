@@ -1,77 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Your Recorder</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: #f2f2f2;
-    }
-    button {
-      margin: 10px 5px;
-      padding: 10px 15px;
-      font-size: 16px;
-    }
-    audio {
-      margin-top: 20px;
-      width: 100%;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>YourRecorder</title>
 </head>
 <body>
-  <h1>🎙️ YourRecorder</h1>
-  <p>Ghi âm trên trình duyệt, phát lại ngay tại đây.</p>
-
-  <button id="startBtn">▶️ Bắt đầu ghi</button>
-  <button id="stopBtn" disabled>⏹ Dừng</button>
-  <button id="saveBtn" disabled>💾 Tải về</button>
-
-  <audio id="audio" controls></audio>
+  <h1>🎙️ Ghi âm trực tuyến</h1>
+  <button id="start">Bắt đầu ghi</button>
+  <button id="stop" disabled>Dừng ghi</button>
+  <button id="upload" disabled>Lưu vào Google Drive</button>
+  <br><br>
+  <audio id="player" controls></audio>
 
   <script>
-    let mediaRecorder;
-    let audioChunks = [];
+    let recorder, stream, chunks = [];
 
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const saveBtn = document.getElementById("saveBtn");
-    const audioEl = document.getElementById("audio");
+    const startBtn = document.getElementById("start");
+    const stopBtn = document.getElementById("stop");
+    const uploadBtn = document.getElementById("upload");
+    const player = document.getElementById("player");
 
     startBtn.onclick = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recorder = new MediaRecorder(stream);
+      chunks = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        player.src = url;
+        uploadBtn.disabled = false;
 
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-        const audioURL = URL.createObjectURL(audioBlob);
-        audioEl.src = audioURL;
-
-        // Gắn vào nút tải về
-        saveBtn.onclick = () => {
-          const a = document.createElement("a");
-          a.href = audioURL;
-          a.download = "recording.webm";
-          a.click();
+        // Gửi tới Google Apps Script (chỉ nếu bạn đã có URL ở phần sau)
+        uploadBtn.onclick = () => {
+          fetch("PASTE_YOUR_WEB_APP_URL_HERE", {
+            method: "POST",
+            body: blob
+          })
+          .then(res => res.text())
+          .then(msg => alert(msg))
+          .catch(err => alert("Lỗi: " + err));
         };
-
-        saveBtn.disabled = false;
       };
 
-      mediaRecorder.start();
+      recorder.start();
       startBtn.disabled = true;
       stopBtn.disabled = false;
     };
 
     stopBtn.onclick = () => {
-      mediaRecorder.stop();
+      recorder.stop();
+      stream.getTracks().forEach(track => track.stop());
       startBtn.disabled = false;
       stopBtn.disabled = true;
     };
