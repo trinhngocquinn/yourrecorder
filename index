@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Recorder</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f2f2f2;
+    }
+    button {
+      margin: 10px 5px;
+      padding: 10px 15px;
+      font-size: 16px;
+    }
+    audio {
+      margin-top: 20px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎙️ YourRecorder</h1>
+  <p>Ghi âm trên trình duyệt, phát lại ngay tại đây.</p>
+
+  <button id="startBtn">▶️ Bắt đầu ghi</button>
+  <button id="stopBtn" disabled>⏹ Dừng</button>
+  <button id="saveBtn" disabled>💾 Tải về</button>
+
+  <audio id="audio" controls></audio>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const audioEl = document.getElementById("audio");
+
+    startBtn.onclick = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        const audioURL = URL.createObjectURL(audioBlob);
+        audioEl.src = audioURL;
+
+        // Gắn vào nút tải về
+        saveBtn.onclick = () => {
+          const a = document.createElement("a");
+          a.href = audioURL;
+          a.download = "recording.webm";
+          a.click();
+        };
+
+        saveBtn.disabled = false;
+      };
+
+      mediaRecorder.start();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+    };
+
+    stopBtn.onclick = () => {
+      mediaRecorder.stop();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+  </script>
+</body>
+</html>
