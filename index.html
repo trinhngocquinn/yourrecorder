@@ -94,6 +94,15 @@
       margin-top: 20px;
     }
 
+    #download {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 16px;
+      color: #2980b9;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
     .toggle {
       position: absolute;
       top: 16px;
@@ -107,16 +116,6 @@
     .toggle:hover {
       transform: scale(1.1);
     }
-
-    #download {
-      display: none;
-      margin-top: 10px;
-      text-decoration: none;
-      color: white;
-      background-color: green;
-      padding: 10px 16px;
-      border-radius: 8px;
-    }
   </style>
 </head>
 <body>
@@ -126,7 +125,7 @@
     <button id="start">Bắt đầu ghi</button>
     <button id="stop" disabled>Dừng ghi</button>
     <audio id="player" controls></audio>
-    <a id="download" download>📥 Tải về</a>
+    <a id="download" style="display:none;" download>📥 Tải về</a>
   </div>
 
   <script>
@@ -134,7 +133,7 @@
     const startBtn = document.getElementById("start");
     const stopBtn = document.getElementById("stop");
     const player = document.getElementById("player");
-    const downloadLink = document.getElementById("download");
+    const download = document.getElementById("download");
 
     startBtn.onclick = async () => {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -147,21 +146,19 @@
         const url = URL.createObjectURL(blob);
         player.src = url;
 
-        // Đặt tên file
+        // Tải file
         const now = new Date();
         const timestamp = now.toISOString().replace(/[:.]/g, "-");
         const filename = `recording-${timestamp}.webm`;
-
-        // Gán file tải
-        downloadLink.href = url;
-        downloadLink.download = filename;
-        downloadLink.style.display = "inline-block";
+        download.href = url;
+        download.download = filename;
+        download.style.display = "inline-block";
       };
 
       recorder.start();
       startBtn.disabled = true;
       stopBtn.disabled = false;
-      downloadLink.style.display = "none";
+      download.style.display = "none";
     };
 
     stopBtn.onclick = () => {
@@ -171,7 +168,7 @@
       stopBtn.disabled = true;
     };
 
-    // Toggle dark mode
+    // Dark mode toggle
     const toggleBtn = document.getElementById("themeToggle");
     toggleBtn.onclick = () => {
       document.body.classList.toggle("dark");
